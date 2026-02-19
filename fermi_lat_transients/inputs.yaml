@@ -1,0 +1,55 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Fermi-LAT Transient Analysis Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# This file configures the analysis pipeline for any transient source
+# population (MGFs, FXTs, GRBs, etc.).
+
+# ─── Source Catalog ──────────────────────────────────────────────────────
+catalog_file: "data/catalogs/GBM_eMGF_candidates.txt"
+catalog_format: "tab"             # tab, csv, fits
+column_name: "GRB_name"           # Column with source name
+column_ra: "gal_ra_deg"           # Column with RA (degrees)
+column_dec: "gal_dec_deg"         # Column with Dec (degrees)
+column_trigger_time: "MET_trig_time"  # Column with trigger time (MET)
+
+# ─── Fermi Data Paths ────────────────────────────────────────────────────
+ft1: null                         # Event file path (or filelist.txt)
+ft2: null                         # Spacecraft file path
+galdiff: null                     # Galactic diffuse model (gll_iem_v07.fits)
+isodiff: null                     # Isotropic template (iso_P8R3_*.txt)
+ltcube: null                      # Pre-computed livetime cube (optional)
+catalog_fits: null                # 4FGL catalog FITS file (gll_psc_v35.fit)
+
+# ─── LAT Analysis Parameters ────────────────────────────────────────────
+emin: 100.0                       # Minimum energy [MeV]
+emax: 100000.0                    # Maximum energy [MeV]
+roi: 12.0                         # Region of interest radius [degrees]
+zmax: 100.0                       # Maximum zenith angle [degrees]
+evclass: 8                        # Event class (8=Transient, 128=Source)
+evtype: 3                         # Event type (3=FRONT+BACK)
+irfs: "P8R3_TRANSIENT020E_V3"    # Instrument response functions
+
+# ─── Time Window ─────────────────────────────────────────────────────────
+dt_pre: 0.0                       # Seconds before trigger to include
+dt_post: 500.0                    # Seconds after trigger to include
+
+# ─── Profile Likelihood ─────────────────────────────────────────────────
+spectral_index: -2.0              # Fixed photon index for profile scan
+flux_npts: 150                    # Number of flux grid points
+flux_min: 1.0e-11                 # Minimum flux [ph/cm2/s]
+flux_max: 1.0e-3                  # Maximum flux [ph/cm2/s]
+delta_ts_95: 2.71                 # Delta-TS for 95% CL upper limit
+
+# ─── SED Configuration ──────────────────────────────────────────────────
+sed_bins: [100, 316, 1000, 3162, 10000]   # Energy bin edges [MeV]
+
+# ─── Transient Source Model ──────────────────────────────────────────────
+transient_src_name: "Transient"   # Name for the transient source
+transient_spectrum: "PowerLaw2"   # Spectral model type
+
+# ─── Optimizer ───────────────────────────────────────────────────────────
+optimizer: "NEWMINUIT"            # Likelihood optimizer
+fit_tolerance: 1.0e-5             # Fit convergence tolerance
+
+# ─── Output ──────────────────────────────────────────────────────────────
+output_dir: "output"              # Base output directory

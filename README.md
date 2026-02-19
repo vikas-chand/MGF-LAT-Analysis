@@ -1,10 +1,134 @@
-# MGF LAT Analysis
+# fermi_lat_transients
 
-Fermi-LAT GeV analysis of extragalactic Magnetar Giant Flare (MGF) candidates.
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
+
+**Fermi-LAT unbinned likelihood analysis and stacking pipeline for transient sources.**
+
+A reusable Python package for GeV gamma-ray analysis of any transient source population (Magnetar Giant Flares, Fast X-ray Transients, GRBs, etc.) using Fermi-LAT data.
 
 ## Overview
 
-This repository contains the Fermi-LAT analysis pipeline and results for 7 extragalactic MGF candidates detected by Fermi-GBM. The analysis includes individual source likelihood analysis, TS map generation, spectral energy distribution (SED) construction, and a stacking analysis combining all candidates to derive the most constraining upper limits on delayed/extended GeV emission from MGFs.
+This package provides a complete pipeline for:
+- **Event selection & data reduction** via Fermitools wrappers
+- **Unbinned likelihood analysis** with 4FGL catalog models
+- **Profile likelihood scanning** and 95% CL upper limit extraction
+- **SED construction** via per-energy-bin profile scans
+- **Stacking analysis** combining profile likelihoods across multiple sources
+- **Physics calculations**: flux conversions, fireball parameters, cosmological rates
+- **Publication-quality visualization**: TS maps, profile plots, SED plots
+
+Currently applied to 7 extragalactic MGF candidates detected by Fermi-GBM.
+
+## Installation
+
+```bash
+# From source (recommended for development)
+git clone https://github.com/vikas-chand/MGF-LAT-Analysis.git
+cd MGF-LAT-Analysis
+pip install -e .
+
+# Or install dependencies only
+pip install -r requirements.txt
+```
+
+**Note:** [Fermitools](https://github.com/fermi-lat/Fermitools-conda/) must be installed separately (conda-based).
+
+## Quick Start
+
+### Using the configuration-driven pipeline
+
+```bash
+# 1. Edit inputs.yaml with your data paths and parameters
+# 2. Run the full pipeline
+lat-transients-run inputs.yaml
+```
+
+### Using the package in Python
+
+```python
+from fermi_lat_transients.config import load_config
+from fermi_lat_transients.data import load_catalog, build_target
+from fermi_lat_transients.pipeline import run_pipeline
+from fermi_lat_transients.likelihood import profile_scan, upper_limit_from_profile
+from fermi_lat_transients.stacking import stack_profiles, stacked_upper_limit
+from fermi_lat_transients.physics import isotropic_energy, K_from_photon_flux
+
+# Load config and catalog
+cfg = load_config('inputs.yaml')
+targets = load_catalog(cfg.catalog_file)
+
+# Or build a single target manually
+target = build_target('MySource', ra=180.0, dec=45.0, t0=600000000, dt_post=1000)
+```
+
+## Configuration
+
+All analysis parameters are controlled via `inputs.yaml`:
+
+```yaml
+# Source catalog
+catalog_file: "data/catalogs/my_sources.csv"
+catalog_format: "csv"
+
+# Fermi data paths
+ft2: "/path/to/spacecraft.fits"
+galdiff: "/path/to/gll_iem_v07.fits"
+isodiff: "/path/to/iso_P8R3_SOURCE_V3_v1.txt"
+catalog_fits: "/path/to/gll_psc_v35.fit"
+
+# Analysis parameters
+emin: 100.0         # MeV
+emax: 100000.0      # MeV
+roi: 12.0           # degrees
+irfs: "P8R3_TRANSIENT020E_V3"
+dt_post: 500.0      # seconds after trigger
+spectral_index: -2.0
+```
+
+See [`fermi_lat_transients/inputs.yaml`](fermi_lat_transients/inputs.yaml) for the full template.
+
+## Repository Structure
+
+```
+MGF-LAT-Analysis/
+├── fermi_lat_transients/       # Python package
+│   ├── pipeline/               #   Fermitools wrappers (gtselect, gtmktime, ...)
+│   ├── likelihood/             #   Unbinned likelihood, profile scans, SED
+│   ├── stacking/               #   Profile & SED stacking
+│   ├── physics/                #   Flux conversions, fireball params, rates
+│   ├── data/                   #   Catalog loading, file I/O
+│   ├── plotting/               #   TS maps, profiles, SEDs
+│   ├── client.py               #   Main pipeline orchestration
+│   ├── config.py               #   YAML configuration system
+│   ├── constants.py            #   Physical constants
+│   └── inputs.yaml             #   Default config template
+│
+├── notebooks/                  # Analysis notebooks (examples)
+│   └── mgf/                    #   MGF-specific analysis
+│
+├── data/                       # Source catalogs & results
+│   ├── catalogs/               #   Source lists
+│   ├── results/                #   Per-source analysis outputs
+│   ├── stacking/               #   Stacking results
+│   └── stacking_offset/        #   Control region results
+│
+├── figures/                    # Publication figures
+├── setup.py                    # Package installation
+├── requirements.txt            # Dependencies
+└── README.md
+```
+
+## Package API
+
+| Module | Description |
+|--------|-------------|
+| `fermi_lat_transients.pipeline` | Fermitools wrappers: `gtselect`, `gtmktime`, `gtltcube`, `gtexpmap`, `gtdiffrsp` |
+| `fermi_lat_transients.likelihood` | `setup_unbinned`, `fit`, `profile_scan`, `upper_limit_from_profile`, `sed_profile_scan` |
+| `fermi_lat_transients.stacking` | `stack_profiles`, `stacked_upper_limit`, `stack_sed_profiles` |
+| `fermi_lat_transients.physics` | `K_from_photon_flux`, `energy_flux_from_K`, `isotropic_energy`, `L0_from_Lgamma`, fireball params |
+| `fermi_lat_transients.data` | `load_catalog`, `build_target`, `utc_to_met`, `find_ft1_ft2` |
+| `fermi_lat_transients.plotting` | `plot_profile`, `plot_stacked_profile`, `plot_sed`, `plot_stacked_sed` |
+| `fermi_lat_transients.config` | `load_config`, `Config` class |
 
 ## MGF Candidates
 
@@ -18,63 +142,25 @@ This repository contains the Fermi-LAT analysis pipeline and results for 7 extra
 | GRB 231024A | NGC 0253 | 719846439 |
 | GRB 231115A | M82 | 721755386 |
 
-## Repository Structure
-
-```
-MGF_LAT_Analysis/
-├── trigger_analysis/           # Individual GRB LAT likelihood analysis
-│   ├── MGF_analysis_LAT.ipynb  # Master analysis notebook
-│   ├── MGF_GRB_200415A_LAT_v1.ipynb  # Detailed GRB 200415A analysis
-│   ├── MGF_Discussion.ipynb    # Fireball parameter calculations
-│   ├── GBM_eMGF_candidates.txt # Source catalog
-│   ├── make4FGLxml.py          # 4FGL XML model builder
-│   ├── GRB_*/                  # Per-source analysis & results
-│   │   ├── MGF_GRB_*_LAT_v1.ipynb
-│   │   ├── *_Analysis/         # XML models, TS maps, ROI regions
-│   │   ├── source_TS.txt       # TS values
-│   │   └── trigcat.txt         # Trigger catalog info
-│   ├── gtburst_results/        # GTBURST upper limits & flux plots
-│   └── exposure_check/         # LAT exposure verification
-│
-├── stacking_analysis/          # Combined stacking of all GRBs
-│   ├── MGF_Stacking_Analysis.ipynb
-│   ├── MGF_Stacking_Analysis_with_IndividualULs.ipynb
-│   ├── MGF_SED_Stacking_Analysis.ipynb
-│   ├── MGF_Analysis_SED.ipynb
-│   ├── MGF_Discussion_Stacking.ipynb
-│   ├── Calculate_TstartGTI.ipynb
-│   ├── upper_limits_summary.csv
-│   ├── GRB_*/                  # Per-source stacking data
-│   └── *.csv / *.pdf           # SED points & plots
-│
-├── stacking_analysis_offset/   # Control regions (offset stacking)
-│
-├── rates_analysis/             # MGF rate calculations
-│   └── GRB_Rates_Analytical.ipynb
-│
-├── utils/                      # Shared utility scripts
-│   ├── ts_maps/                # TS map generation & publication plots
-│   │   └── plot_tsmap_publication.py
-│   └── sed_scripts/            # SED construction (likeSED v13.1)
-│
-└── figures/                    # Publication-ready figures
-```
-
 ## Analysis Pipeline
 
-1. **Data Selection** - Fermi-LAT Pass 8 SOURCE class events, 100 MeV - 300 GeV
+1. **Data Selection** - Fermi-LAT Pass 8 events, 100 MeV - 100 GeV
 2. **Likelihood Analysis** - Unbinned likelihood with 4FGL catalog sources
-3. **TS Maps** - Test Statistic maps at each GRB position
-4. **Upper Limits** - 95% CL flux upper limits per source
+3. **TS Maps** - Test Statistic maps at each source position
+4. **Profile Likelihood** - Flux scanning and 95% CL upper limits
 5. **SED Construction** - Multi-band spectral energy distributions
-6. **Stacking** - Joint likelihood combining all candidates
-7. **Fireball Physics** - Derived parameters (L0, T0, eta) from scaling relations
+6. **Stacking** - Combined profile likelihood across all sources
+7. **Physics** - Fireball parameters, isotropic energies, rate constraints
 
 ## Dependencies
 
-- Fermitools (gtselect, gtmktime, gtltcube, gtexpmap, gtlike, gttsmap, gtsrcprob)
-- Python 3, astropy, numpy, scipy, pandas, matplotlib
+- **Fermitools** (gtselect, gtmktime, gtltcube, gtexpmap, gtlike) - install via conda
+- Python 3.8+, numpy, pandas, astropy, matplotlib, scipy, pyyaml
 
 ## Data
 
-Large FITS data files are not tracked by git. To reproduce the analysis, download Fermi-LAT data from the [FSSC Data Server](https://fermi.gsfc.nasa.gov/cgi-bin/ssc/LAT/LATDataQuery.cgi) using the coordinates and time windows specified in each notebook.
+Large FITS data files are not tracked by git. Download Fermi-LAT data from the [FSSC Data Server](https://fermi.gsfc.nasa.gov/cgi-bin/ssc/LAT/LATDataQuery.cgi).
+
+## License
+
+This project is for scientific research purposes.

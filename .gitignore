@@ -27,9 +27,13 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Large binary files
-*.npz
+# Large binary files (data results have .npz tracked selectively)
 *.npy
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
 
 # Temporary files
 *.textClipping
