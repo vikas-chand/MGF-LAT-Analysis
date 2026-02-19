@@ -1,0 +1,41 @@
+# Large data files
+*.fits
+*.fit
+*.fits.gz
+ft2.fits
+
+# Fermi science tools outputs
+gll_iem_*.fits
+gll_psc_*.fit
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Large binary files
+*.npz
+*.npy
+
+# Temporary files
+*.textClipping
+__temp__*
+*.log
+
+# PDF reference papers (keep only project-generated PDFs)
+# Uncomment the line below to exclude all PDFs:
+# *.pdf
